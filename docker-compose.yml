@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: foodie_postgres
+    environment:
+      POSTGRES_USER: foodie_user
+      POSTGRES_PASSWORD: foodie_password
+      POSTGRES_DB: foodie_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile.server
+    container_name: foodie_server
+    ports:
+      - "5000:5000"
+    environment:
+      PORT: 5000
+      NODE_ENV: production
+      DATABASE_URL: "postgresql://foodie_user:foodie_password@postgres:5432/foodie_db"
+      JWT_ACCESS_SECRET: super_secret_access_key
+      JWT_REFRESH_SECRET: super_secret_refresh_key
+    depends_on:
+      - postgres
+
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile.client
+    container_name: foodie_client
+    ports:
+      - "80:80"
+    depends_on:
+      - server
+
+volumes:
+  postgres_data:
